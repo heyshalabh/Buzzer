@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Quiz Buzzer — Live Game Show</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --bg-card: #121826;
+      --bg-elevated: #1a2234;
+      --border: rgba(255,255,255,0.1);
+      --text: #f0f4fc;
+      --text-muted: #8b9bb8;
+      --accent: #00e5ff;
+      --accent-dim: rgba(0,229,255,0.18);
+      --success: #00e676;
+      --danger: #ff3d71;
+      --warning: #ffab00;
+      --gold: #ffd700;
+      --purple: #b388ff;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.4);
+      --glow-cyan: 0 0 20px rgba(0,229,255,0.55);
+      --glow-gold: 0 0 22px rgba(255,215,0,0.55);
+      --glow-red: 0 0 24px rgba(255,61,113,0.5);
+      --glow-green: 0 0 20px rgba(0,230,118,0.45);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Poppins', system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      overflow-x: hidden;
+    }
+
+    /* ========== SHARED ========== */
+    .hidden { display: none !important; }
+    .screen { min-height: 100dvh; width: 100%; }
+
+    .conn-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(0,0,0,0.35); border: 1px solid var(--border);
+    }
+    .conn-badge .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--danger);
+    }
+    .conn-badge.online .dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+
+    /* ========== LANDING ========== */
+    #landing {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; gap: 28px; background: var(--bg);
+    }
+    #landing h1 {
+      font-family: 'Poppins', sans-serif; font-weight: 800; font-size: clamp(1.9rem, 6vw, 2.8rem);
+      text-align: center; letter-spacing: -0.02em; color: #fff;
+    }
+    #landing h1 .glow-icon {
+      color: var(--accent); filter: drop-shadow(0 0 12px rgba(0,229,255,0.8));
+      margin-right: 6px;
+    }
+    #landing .sub { color: var(--text-muted); text-align: center; max-width: 360px; line-height: 1.55; font-weight: 400; }
+    .mode-cards { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; width: 100%; max-width: 640px; }
+    .mode-card {
+      flex: 1 1 240px; padding: 28px 24px; border-radius: var(--radius);
+      background: var(--bg-card); border: 2px solid var(--border);
+      cursor: pointer; transition: transform 0.18s, border-color 0.18s, box-shadow 0.18s;
+      text-align: center;
+    }
+    .mode-card:hover, .mode-card:focus {
+      transform: translateY(-3px); border-color: var(--accent);
+      box-shadow: var(--glow-cyan);
+    }
+    .mode-card i {
+      font-size: 2.5rem; margin-bottom: 14px; color: var(--accent);
+      filter: drop-shadow(0 0 10px rgba(0,229,255,0.7));
+    }
+    .mode-card h2 { font-size: 1.15rem; margin-bottom: 6px; font-weight: 700; }
+    .mode-card p { font-size: 0.85rem; color: var(--text-muted); font-weight: 400; }
+
+    /* ========== TEAM JOIN ========== */
+    #team-join {
+      display: flex; flex-direction: column; align-items: center; padding: 24px 16px 48px;
+      background: var(--bg);
+    }
+    #team-join h1 {
+      font-family: 'Poppins', sans-serif; font-size: 1.55rem; margin: 16px 0 8px;
+      font-weight: 800; letter-spacing: -0.01em;
+    }
+    #team-join h1 i {
+      color: var(--accent); filter: drop-shadow(0 0 10px rgba(0,229,255,0.7));
+    }
+    #team-join .hint { color: var(--text-muted); margin-bottom: 24px; font-size: 0.9rem; }
+    .team-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px; width: 100%; max-width: 560px;
+    }
+    .team-btn {
+      padding: 18px 12px; border-radius: 12px; border: 2px solid var(--border);
+      background: var(--bg-card); color: var(--text); font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: all 0.18s; text-align: center;
+      font-family: 'Poppins', sans-serif;
+    }
+    .team-btn:hover, .team-btn:focus {
+      border-color: var(--accent); background: var(--accent-dim);
+      box-shadow: var(--glow-cyan); transform: scale(1.03);
+    }
+    .team-btn.taken { opacity: 0.45; pointer-events: none; }
+
+    /* ========== TEAM BUZZER ========== */
+    #team-buzzer {
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100dvh; padding: 16px 16px 32px;
+      background: var(--bg);
+    }
+    .tb-header {
+      width: 100%; max-width: 420px; display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .tb-title {
+      font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 1.05rem;
+      color: var(--accent); letter-spacing: 0.02em;
+    }
+    .tb-title i {
+      filter: drop-shadow(0 0 8px rgba(0,229,255,0.75));
+    }
+    .tb-team-name {
+      font-family: 'Poppins', sans-serif; font-weight: 800; font-size: clamp(1.4rem, 5vw, 1.9rem);
+      text-align: center; margin: 12px 0 8px; letter-spacing: -0.02em;
+    }
+    .tb-status {
+      font-size: 0.95rem; font-weight: 600; text-align: center; min-height: 1.4em;
+      color: var(--text-muted); margin-bottom: 20px;
+    }
+    .tb-status.active { color: var(--success); text-shadow: 0 0 14px rgba(0,230,118,0.65); }
+    .tb-status.buzzed { color: var(--accent); text-shadow: 0 0 10px rgba(0,229,255,0.5); }
+    .tb-status.winner { color: var(--gold); text-shadow: 0 0 16px rgba(255,215,0,0.7); }
+    .tb-status.locked { color: var(--danger); text-shadow: 0 0 10px rgba(255,61,113,0.45); }
+    .tb-status.wrong { color: var(--danger); }
+
+    .buzzer-wrap {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      width: 100%; max-width: 360px; position: relative;
+    }
+    .buzzer-btn {
+      width: min(72vw, 280px); height: min(72vw, 280px);
+      border-radius: 50%; border: 4px solid rgba(255,255,255,0.15); cursor: pointer;
+      background: #e53935;
+      box-shadow:
+        0 0 0 10px rgba(229,57,53,0.22),
+        0 0 36px rgba(229,57,53,0.45),
+        0 6px 0 #b71c1c;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; color: #fff; font-family: 'Poppins', sans-serif;
+      transition: transform 0.08s ease, box-shadow 0.2s, filter 0.2s;
+      touch-action: manipulation; user-select: none; -webkit-user-select: none;
+      position: relative; overflow: hidden;
+    }
+    .buzzer-btn i {
+      font-size: 3.4rem;
+      filter: drop-shadow(0 0 12px rgba(255,255,255,0.55));
+    }
+    .buzzer-btn span { font-size: 1.4rem; font-weight: 800; letter-spacing: 0.08em; }
+    .buzzer-btn:active:not(:disabled) {
+      transform: scale(0.93) translateY(4px);
+      box-shadow:
+        0 0 0 8px rgba(229,57,53,0.28),
+        0 0 28px rgba(229,57,53,0.5),
+        0 2px 0 #b71c1c;
+    }
+    .buzzer-btn.active-glow {
+      animation: pulse-glow 1.35s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% {
+        box-shadow: 0 0 0 10px rgba(229,57,53,0.22), 0 0 36px rgba(229,57,53,0.45), 0 6px 0 #b71c1c;
+      }
+      50% {
+        box-shadow: 0 0 0 16px rgba(229,57,53,0.38), 0 0 55px rgba(229,57,53,0.65), 0 6px 0 #b71c1c;
+      }
+    }
+    .buzzer-btn:disabled {
+      cursor: not-allowed; filter: grayscale(0.55) brightness(0.72);
+      animation: none;
+    }
+    .buzzer-btn.winner-state {
+      background: #ffc107;
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 0 0 12px rgba(255,193,7,0.3), var(--glow-gold), 0 6px 0 #ff8f00;
+      filter: none;
+    }
+    .buzzer-btn.winner-state i {
+      filter: drop-shadow(0 0 14px rgba(255,255,255,0.7));
+    }
+    .ripple {
+      position: absolute; border-radius: 50%; background: rgba(255,255,255,0.35);
+      transform: scale(0); animation: ripple-anim 0.5s ease-out forwards; pointer-events: none;
+    }
+    @keyframes ripple-anim {
+      to { transform: scale(2.5); opacity: 0; }
+    }
+
+    .tb-footer {
+      margin-top: 20px; font-size: 0.8rem; color: var(--text-muted); text-align: center;
+    }
+
+    /* ========== ADMIN LOGIN ========== */
+    #admin-login {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px; min-height: 100dvh;
+      background: radial-gradient(ellipse at center, rgba(179,136,255,0.1), transparent 60%), var(--bg);
+    }
+    #admin-login .card {
+      width: 100%; max-width: 380px; padding: 32px 28px; border-radius: var(--radius);
+      background: var(--bg-card); border: 1px solid var(--border); box-shadow: var(--shadow);
+    }
+    #admin-login h1 {
+      font-family: 'Poppins', sans-serif; font-size: 1.45rem; font-weight: 800; text-align: center; margin-bottom: 8px;
+    }
+    #admin-login h1 i {
+      color: var(--accent); filter: drop-shadow(0 0 10px rgba(0,229,255,0.7));
+    }
+    #admin-login .sub { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 24px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+    .form-group input {
+      width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border);
+      background: var(--bg-elevated); color: var(--text); font-size: 1rem; outline: none;
+    }
+    .form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      background: linear-gradient(135deg, #00b8d4, #00e5ff); color: #041018; width: 100%;
+    }
+    .btn-primary:hover { box-shadow: var(--glow-cyan); }
+    .btn-danger { background: linear-gradient(135deg, #c62828, #ff3d71); color: #fff; }
+    .btn-success { background: linear-gradient(135deg, #00c853, #00e676); color: #041018; }
+    .btn-warning { background: linear-gradient(135deg, #ff8f00, #ffab00); color: #041018; }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border); color: var(--text-muted);
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .error-msg { color: var(--danger); font-size: 0.85rem; margin-top: 10px; text-align: center; min-height: 1.2em; }
+
+    /* ========== ADMIN DASHBOARD ========== */
+    #admin-dash {
+      display: flex; flex-direction: column; min-height: 100dvh;
+      background: var(--bg);
+    }
+    .ad-top {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border);
+      background: rgba(15,22,41,0.95); position: sticky; top: 0; z-index: 20;
+      backdrop-filter: blur(12px);
+    }
+    .ad-brand {
+      font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.05rem;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ad-brand i {
+      color: var(--accent); filter: drop-shadow(0 0 8px rgba(0,229,255,0.75));
+    }
+    .ad-brand .live-pill {
+      font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+      background: rgba(255,61,113,0.2); color: var(--danger); border: 1px solid rgba(255,61,113,0.4);
+      animation: blink 1.5s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .ad-top-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .ad-main {
+      display: grid; grid-template-columns: 1fr 340px; gap: 16px; padding: 16px 20px 32px;
+      flex: 1;
+    }
+    @media (max-width: 960px) {
+      .ad-main { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; box-shadow: var(--shadow);
+    }
+    .panel h3 {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; color: var(--text-muted);
+      margin-bottom: 12px; text-transform: uppercase;
+    }
+
+    .status-row {
+      display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+    }
+    .stat-chip {
+      flex: 1 1 120px; padding: 14px 16px; border-radius: 12px;
+      background: var(--bg-elevated); border: 1px solid var(--border);
+    }
+    .stat-chip .label { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.06em; margin-bottom: 4px; }
+    .stat-chip .value { font-family: 'Poppins', sans-serif; font-size: 1.35rem; font-weight: 800; }
+    .stat-chip.active .value { color: var(--success); }
+    .stat-chip.locked .value { color: var(--danger); }
+    .stat-chip.idle .value { color: var(--text-muted); }
+
+    .first-buzz-card {
+      padding: 20px; border-radius: 14px; margin-bottom: 16px;
+      background: linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,193,7,0.05));
+      border: 1px solid rgba(255,215,0,0.35);
+      min-height: 90px; display: flex; flex-direction: column; justify-content: center;
+    }
+    .first-buzz-card.empty {
+      background: var(--bg-elevated); border-color: var(--border);
+    }
+    .first-buzz-card .label { font-size: 0.7rem; color: var(--gold); letter-spacing: 0.08em; margin-bottom: 6px; }
+    .first-buzz-card .team {
+      font-family: 'Poppins', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--gold);
+      text-shadow: 0 0 14px rgba(255,215,0,0.45);
+    }
+    .first-buzz-card .time { font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; }
+    .first-buzz-card.empty .team { color: var(--text-muted); font-size: 1.1rem; font-weight: 600; }
+
+    .controls-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 16px;
+    }
+    .controls-grid .btn {
+      padding: 14px 12px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; font-weight: 700;
+      border: 2px solid transparent;
+    }
+    .controls-grid .btn i { filter: drop-shadow(0 0 6px rgba(255,255,255,0.35)); }
+    .ctrl-activate { background: #00c853; color: #041018; box-shadow: 0 0 16px rgba(0,200,83,0.35); }
+    .ctrl-activate:hover { box-shadow: var(--glow-green); }
+    .ctrl-lock { background: #d50000; color: #fff; box-shadow: 0 0 16px rgba(213,0,0,0.35); }
+    .ctrl-lock:hover { box-shadow: var(--glow-red); }
+    .ctrl-reset { background: #2962ff; color: #fff; box-shadow: 0 0 16px rgba(41,98,255,0.35); }
+    .ctrl-correct { background: #00bfa5; color: #041018; box-shadow: 0 0 16px rgba(0,191,165,0.35); }
+    .ctrl-wrong { background: #c51162; color: #fff; box-shadow: 0 0 16px rgba(197,17,98,0.35); }
+
+    .buzz-list { list-style: none; max-height: 320px; overflow-y: auto; }
+    .buzz-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border-radius: 10px; margin-bottom: 8px; background: var(--bg-elevated);
+      border: 1px solid transparent; transition: border-color 0.2s;
+    }
+    .buzz-item.first {
+      border-color: rgba(255,215,0,0.5); background: rgba(255,215,0,0.08);
+    }
+    .buzz-item.current {
+      border-color: var(--accent); background: var(--accent-dim);
+      box-shadow: 0 0 16px rgba(0,229,255,0.2);
+    }
+    .buzz-item.wrong { opacity: 0.55; }
+    .buzz-item.correct { border-color: rgba(0,230,118,0.5); background: rgba(0,230,118,0.08); }
+    .buzz-rank {
+      width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.85rem; background: rgba(255,255,255,0.08); flex-shrink: 0;
+    }
+    .buzz-item.first .buzz-rank { background: var(--gold); color: #041018; }
+    .buzz-info { flex: 1; min-width: 0; }
+    .buzz-info .name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .buzz-info .meta { font-size: 0.75rem; color: var(--text-muted); }
+    .badge {
+      font-size: 0.65rem; font-weight: 800; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.04em;
+    }
+    .badge-first { background: rgba(255,215,0,0.25); color: var(--gold); }
+    .badge-waiting { background: rgba(0,229,255,0.15); color: var(--accent); }
+    .badge-wrong { background: rgba(255,61,113,0.2); color: var(--danger); }
+    .badge-correct { background: rgba(0,230,118,0.2); color: var(--success); }
+    .badge-current { background: rgba(0,229,255,0.3); color: #fff; }
+
+    .scoreboard { list-style: none; }
+    .score-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      padding: 10px 12px; border-radius: 10px; margin-bottom: 6px;
+      background: var(--bg-elevated);
+    }
+    .score-row .name { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .score-row .pts {
+      font-family: 'Poppins', sans-serif; font-weight: 800; font-size: 1.15rem; min-width: 36px; text-align: right;
+    }
+    .score-actions { display: flex; gap: 4px; }
+    .score-actions button {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg-card); color: var(--text); cursor: pointer; font-weight: 700;
+    }
+    .score-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+    .side-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .side-actions .btn { width: 100%; justify-content: flex-start; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100;
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 24px; max-width: 360px; width: 100%; box-shadow: var(--shadow);
+    }
+    .modal h3 { margin-bottom: 8px; font-size: 1.1rem; }
+    .modal p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .points-input {
+      width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg-elevated); color: var(--text); font-size: 1.25rem; text-align: center;
+      margin-bottom: 16px; font-family: 'Poppins', sans-serif; font-weight: 700;
+    }
+
+    .toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: var(--bg-elevated); border: 1px solid var(--accent); color: var(--text);
+      padding: 12px 20px; border-radius: 10px; font-weight: 600; z-index: 200;
+      opacity: 0; transition: all 0.3s; pointer-events: none; max-width: 90%;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+  <!-- ========== LANDING ========== -->
+  <div id="landing" class="screen">
+    <h1><i class="fas fa-bolt glow-icon"></i> QUIZ BUZZER</h1>
+    <p class="sub">Real-time game-show buzzer for college quizzes &amp; events</p>
+    <div class="mode-cards">
+      <div class="mode-card" id="go-team" role="button" tabindex="0">
+        <i class="fas fa-users"></i>
+        <h2>Join as Team</h2>
+        <p>Select your team &amp; hit the buzzer</p>
+      </div>
+      <div class="mode-card" id="go-admin" role="button" tabindex="0">
+        <i class="fas fa-sliders-h"></i>
+        <h2>Host / Admin</h2>
+        <p>Control room &amp; live dashboard</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== TEAM JOIN ========== -->
+  <div id="team-join" class="screen hidden">
+    <div class="tb-header" style="max-width:560px;width:100%">
+      <button class="btn btn-ghost" id="team-back" style="padding:8px 12px"><i class="fas fa-arrow-left"></i></button>
+      <span class="conn-badge" id="join-conn"><span class="dot"></span> Connecting…</span>
+    </div>
+    <h1><i class="fas fa-users"></i> SELECT YOUR TEAM</h1>
+    <p class="hint">Tap your team name. Only one device should claim each team.</p>
+    <div class="team-grid" id="team-grid"></div>
+  </div>
+
+  <!-- ========== TEAM BUZZER ========== -->
+  <div id="team-buzzer" class="screen hidden">
+    <div class="tb-header">
+      <span class="tb-title"><i class="fas fa-bolt"></i> QUIZ BUZZER</span>
+      <span class="conn-badge" id="tb-conn"><span class="dot"></span> …</span>
+    </div>
+    <div class="tb-team-name" id="tb-team-name">TEAM</div>
+    <div class="tb-status" id="tb-status">WAITING FOR HOST…</div>
+    <div class="buzzer-wrap">
+      <button class="buzzer-btn" id="buzzer-btn" disabled aria-label="Buzz">
+        <i class="fas fa-bell"></i>
+        <span>BUZZ</span>
+      </button>
+    </div>
+    <div class="tb-footer">
+      <button class="btn btn-ghost" id="team-switch" style="font-size:0.8rem;padding:6px 12px">Switch Team</button>
+    </div>
+  </div>
+
+  <!-- ========== ADMIN LOGIN ========== -->
+  <div id="admin-login" class="screen hidden">
+    <div class="card">
+      <h1><i class="fas fa-bolt"></i> HOST LOGIN</h1>
+      <p class="sub">Admin access only. Participants use Team mode.</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="admin-email">Email</label>
+          <input type="email" id="admin-email" required autocomplete="username" placeholder="host@college.edu" />
+        </div>
+        <div class="form-group">
+          <label for="admin-pass">Password</label>
+          <input type="password" id="admin-pass" required autocomplete="current-password" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> Sign In</button>
+        <div class="error-msg" id="login-error"></div>
+      </form>
+      <button class="btn btn-ghost" id="admin-back" style="width:100%;margin-top:12px"><i class="fas fa-arrow-left"></i> Back</button>
+    </div>
+  </div>
+
+  <!-- ========== ADMIN DASHBOARD ========== -->
+  <div id="admin-dash" class="screen hidden">
+    <header class="ad-top">
+      <div class="ad-brand">
+        <i class="fas fa-bolt"></i> QUIZ CONTROL
+        <span class="live-pill">● LIVE</span>
+      </div>
+      <div class="ad-top-right">
+        <span class="conn-badge" id="ad-conn"><span class="dot"></span> …</span>
+        <button class="btn btn-ghost" id="sound-toggle" title="Toggle sound" style="padding:8px 12px">
+          <i class="fas fa-volume-up" id="sound-icon"></i>
+        </button>
+        <button class="btn btn-ghost" id="admin-logout" style="padding:8px 12px"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </header>
+
+    <div class="ad-main">
+      <div class="left-col">
+        <div class="panel" style="margin-bottom:16px">
+          <div class="status-row">
+            <div class="stat-chip" id="chip-question">
+              <div class="label">QUESTION</div>
+              <div class="value" id="q-num">#01</div>
+            </div>
+            <div class="stat-chip idle" id="chip-status">
+              <div class="label">BUZZER</div>
+              <div class="value" id="buzzer-status-text">IDLE</div>
+            </div>
+            <div class="stat-chip">
+              <div class="label">TEAMS</div>
+              <div class="value" id="team-count">0</div>
+            </div>
+          </div>
+
+          <div class="first-buzz-card empty" id="first-card">
+            <div class="label">FIRST TO BUZZ</div>
+            <div class="team" id="first-team">Waiting for buzzes…</div>
+            <div class="time" id="first-time"></div>
+          </div>
+
+          <div class="controls-grid">
+            <button class="btn ctrl-activate" id="btn-activate"><i class="fas fa-play"></i> ACTIVATE</button>
+            <button class="btn ctrl-lock" id="btn-lock"><i class="fas fa-lock"></i> LOCK</button>
+            <button class="btn ctrl-reset" id="btn-reset"><i class="fas fa-redo"></i> RESET ROUND</button>
+            <button class="btn ctrl-correct" id="btn-correct"><i class="fas fa-check"></i> CORRECT</button>
+            <button class="btn ctrl-wrong" id="btn-wrong"><i class="fas fa-times"></i> WRONG</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Live Buzz Order</h3>
+          <ul class="buzz-list" id="buzz-list">
+            <li style="color:var(--text-muted);padding:12px;text-align:center">No buzzes yet</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="right-col">
+        <div class="panel">
+          <h3>Scoreboard</h3>
+          <ul class="scoreboard" id="scoreboard"></ul>
+          <div class="side-actions">
+            <button class="btn btn-ghost" id="btn-reset-scores"><i class="fas fa-trash-alt"></i> Reset All Scores</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Points modal -->
+  <div class="modal-overlay hidden" id="points-modal">
+    <div class="modal">
+      <h3>Award Points</h3>
+      <p id="points-team-label">Team gets points for correct answer</p>
+      <input type="number" class="points-input" id="points-value" value="10" min="1" max="100" />
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="points-cancel">Cancel</button>
+        <button class="btn btn-success" id="points-confirm"><i class="fas fa-check"></i> Award</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm modal -->
+  <div class="modal-overlay hidden" id="confirm-modal">
+    <div class="modal">
+      <h3 id="confirm-title">Confirm</h3>
+      <p id="confirm-msg">Are you sure?</p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+        <button class="btn btn-danger" id="confirm-ok">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Firebase compat SDK (works without build tools) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <script type="module">
+  /******************************************************************
+   * QUIZ BUZZER — Complete single-file app
+   * Configure Firebase + teams below, then deploy to GitHub Pages.
+   ******************************************************************/
+
+  // ========== CONFIG ==========
+ // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyD0UeCRMVQ3H5DhH2nmcUEbqNha7fyINQc",
+    authDomain: "quickbuzzer-4c73f.firebaseapp.com",
+    projectId: "quickbuzzer-4c73f",
+    storageBucket: "quickbuzzer-4c73f.firebasestorage.app",
+    messagingSenderId: "1020607045608",
+    appId: "1:1020607045608:web:d10f823d7b62df68ad8e5d",
+    measurementId: "G-8N85G4Z04M"
+  };
+  
+
+  // Edit this list for your event
+  const TEAMS = [
+    "Team A",
+    "Team B",
+    "Team C",
+    "Team D",
+    "Team E",
+    "Team F",
+    "Team G",
+    "Team H"
+  ];
+
+  const DEFAULT_POINTS = 10;
+  const STORAGE_KEY = "quiz_buzzer_team_v1";
+
+  // ========== INIT FIREBASE ==========
+  let app, auth, db;
+  try {
+    app = firebase.initializeApp(firebaseConfig);
+    auth = firebase.auth();
+    db = firebase.database();
+  } catch (e) {
+    console.error("Firebase init failed — replace firebaseConfig placeholders.", e);
+  }
+
+  // ========== STATE ==========
+  const state = {
+    mode: null,           // 'team' | 'admin'
+    teamId: null,
+    teamName: null,
+    connected: false,
+    soundOn: true,
+    // shared from RTDB
+    roundId: null,
+    roundStatus: "idle",  // idle | active | locked
+    questionNumber: 1,
+    startedAt: null,
+    buzzes: {},           // buzzId -> { teamId, teamName, timestamp, status }
+    currentTeamId: null,  // team currently allowed to answer
+    scores: {},
+    teamsOnline: {}
+  };
+
+  // ========== AUDIO (Web Audio API — no external files) ==========
+  let audioCtx = null;
+  function ensureAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, type, volume) {
+    if (!state.soundOn) return;
+    try {
+      const ctx = ensureAudio();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type || "square";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      gain.gain.setValueAtTime(0, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(volume || 0.25, ctx.currentTime + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + duration + 0.05);
+    } catch (_) {}
+  }
+
+  function soundBuzzer() {
+    playTone(180, 0.35, "sawtooth", 0.3);
+    setTimeout(() => playTone(120, 0.25, "sawtooth", 0.25), 80);
+  }
+  function soundWinner() {
+    playTone(523, 0.12, "sine", 0.2);
+    setTimeout(() => playTone(659, 0.12, "sine", 0.2), 100);
+    setTimeout(() => playTone(784, 0.25, "sine", 0.25), 200);
+  }
+  function soundWrong() {
+    playTone(200, 0.2, "square", 0.2);
+    setTimeout(() => playTone(150, 0.3, "square", 0.2), 150);
+  }
+  function soundNext() {
+    playTone(440, 0.1, "triangle", 0.2);
+    setTimeout(() => playTone(554, 0.15, "triangle", 0.2), 100);
+  }
+  function soundActivate() {
+    playTone(880, 0.08, "sine", 0.15);
+    setTimeout(() => playTone(1175, 0.12, "sine", 0.18), 80);
+  }
+
+  // ========== HELPERS ==========
+  function showToast(msg, ms = 2500) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("show");
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove("show"), ms);
+  }
+
+  function teamIdFromName(name) {
+    return name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  }
+
+  function formatMs(ms) {
+    if (ms == null || isNaN(ms)) return "—";
+    return (ms / 1000).toFixed(3) + " s";
+  }
+
+  function haptic() {
+    if (navigator.vibrate) navigator.vibrate(40);
+  }
+
+  function showScreen(id) {
+    ["landing", "team-join", "team-buzzer", "admin-login", "admin-dash"].forEach(s => {
+      document.getElementById(s).classList.toggle("hidden", s !== id);
+    });
+  }
+
+  function updateConnBadges(online) {
+    state.connected = online;
+    ["join-conn", "tb-conn", "ad-conn"].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle("online", online);
+      el.innerHTML = online
+        ? '<span class="dot"></span> CONNECTED'
+        : '<span class="dot"></span> OFFLINE';
+    });
+  }
+
+  // ========== ROUTING ==========
+  function route() {
+    const hash = (location.hash || "#").replace("#", "").toLowerCase();
+    if (hash === "admin" || hash.startsWith("admin")) {
+      auth.onAuthStateChanged(user => {
+        if (user) {
+          state.mode = "admin";
+          showScreen("admin-dash");
+          startAdminListeners();
+        } else {
+          showScreen("admin-login");
+        }
+      });
+    } else if (hash === "team" || hash.startsWith("team")) {
+      state.mode = "team";
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          if (data.teamId && data.teamName && TEAMS.includes(data.teamName)) {
+            joinTeam(data.teamId, data.teamName, false);
+            return;
+          }
+        } catch (_) {}
+      }
+      showScreen("team-join");
+      renderTeamGrid();
+      startConnectionWatcher();
+    } else {
+      showScreen("landing");
+    }
+  }
+
+  // ========== CONNECTION ==========
+  function startConnectionWatcher() {
+    if (!db) return;
+    const connectedRef = db.ref(".info/connected");
+    connectedRef.on("value", snap => {
+      updateConnBadges(!!snap.val());
+    });
+  }
+
+  // ========== TEAM SIDE ==========
+  function renderTeamGrid() {
+    const grid = document.getElementById("team-grid");
+    grid.innerHTML = "";
+    TEAMS.forEach(name => {
+      const id = teamIdFromName(name);
+      const btn = document.createElement("button");
+      btn.className = "team-btn";
+      btn.textContent = name;
+      btn.dataset.teamId = id;
+      btn.addEventListener("click", () => joinTeam(id, name, true));
+      grid.appendChild(btn);
+    });
+  }
+
+  function joinTeam(teamId, teamName, save) {
+    state.teamId = teamId;
+    state.teamName = teamName;
+    if (save) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ teamId, teamName }));
+    }
+    document.getElementById("tb-team-name").textContent = teamName;
+    showScreen("team-buzzer");
+    startConnectionWatcher();
+    startTeamListeners();
+    // mark presence (optional)
+    if (db) {
+      const presence = db.ref("quiz/teams/" + teamId);
+      presence.update({ name: teamName, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+      presence.onDisconnect().update({ connected: false });
+      presence.update({ connected: true });
+    }
+  }
+
+  function startTeamListeners() {
+    if (!db) return;
+    const roundRef = db.ref("quiz/currentRound");
+    roundRef.on("value", snap => {
+      const data = snap.val() || {};
+      state.roundId = data.roundId || null;
+      state.roundStatus = data.status || "idle";
+      state.questionNumber = data.questionNumber || 1;
+      state.startedAt = data.startedAt || null;
+      state.currentTeamId = data.currentTeamId || null;
+      state.buzzes = data.buzzes || {};
+      updateTeamUI();
+    });
+  }
+
+  function updateTeamUI() {
+    const statusEl = document.getElementById("tb-status");
+    const btn = document.getElementById("buzzer-btn");
+    const myBuzz = Object.values(state.buzzes).find(b => b.teamId === state.teamId);
+
+    btn.classList.remove("active-glow", "winner-state");
+
+    if (state.roundStatus === "active") {
+      if (myBuzz) {
+        if (myBuzz.status === "correct") {
+          statusEl.textContent = "YOU ARE FIRST! 🔥";
+          statusEl.className = "tb-status winner";
+          btn.disabled = true;
+          btn.classList.add("winner-state");
+        } else if (myBuzz.status === "wrong") {
+          statusEl.textContent = "YOU'RE LOCKED OUT";
+          statusEl.className = "tb-status locked";
+          btn.disabled = true;
+        } else if (state.currentTeamId === state.teamId) {
+          statusEl.textContent = "YOUR TURN! ⚡";
+          statusEl.className = "tb-status winner";
+          btn.disabled = true;
+          btn.classList.add("winner-state");
+        } else {
+          statusEl.textContent = "BUZZ REGISTERED ⚡";
+          statusEl.className = "tb-status buzzed";
+          btn.disabled = true;
+        }
+      } else {
+        statusEl.textContent = "BUZZ NOW!";
+        statusEl.className = "tb-status active";
+        btn.disabled = false;
+        btn.classList.add("active-glow");
+      }
+    } else if (state.roundStatus === "locked") {
+      if (myBuzz && (myBuzz.status === "correct" || state.currentTeamId === state.teamId)) {
+        statusEl.textContent = state.currentTeamId === state.teamId ? "YOUR TURN! ⚡" : "BUZZ REGISTERED ⚡";
+        statusEl.className = "tb-status winner";
+        btn.classList.add("winner-state");
+      } else if (myBuzz) {
+        statusEl.textContent = myBuzz.status === "wrong" ? "YOU'RE LOCKED OUT" : "BUZZ REGISTERED ⚡";
+        statusEl.className = "tb-status locked";
+      } else {
+        statusEl.textContent = "BUZZER LOCKED";
+        statusEl.className = "tb-status locked";
+      }
+      btn.disabled = true;
+    } else {
+      statusEl.textContent = "WAITING FOR NEXT QUESTION";
+      statusEl.className = "tb-status";
+      btn.disabled = true;
+    }
+  }
+
+  // Prevent double-tap / spam
+  let buzzing = false;
+  document.getElementById("buzzer-btn").addEventListener("pointerdown", async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById("buzzer-btn");
+    if (btn.disabled || buzzing) return;
+    if (!state.connected) {
+      showToast("Connection lost — cannot buzz");
+      return;
+    }
+    if (state.roundStatus !== "active") return;
+    if (Object.values(state.buzzes).some(b => b.teamId === state.teamId)) return;
+
+    buzzing = true;
+    haptic();
+
+    // Ripple effect
+    const rect = btn.getBoundingClientRect();
+    const ripple = document.createElement("span");
+    ripple.className = "ripple";
+    const size = Math.max(rect.width, rect.height);
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+    ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+    btn.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 500);
+
+    try {
+      const buzzRef = db.ref("quiz/currentRound/buzzes").push();
+      await buzzRef.set({
+        teamId: state.teamId,
+        teamName: state.teamName,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        status: "waiting",
+        roundId: state.roundId
+      });
+      soundBuzzer();
+      // UI will update via listener
+    } catch (err) {
+      console.error(err);
+      showToast("Buzz failed — try again");
+    } finally {
+      setTimeout(() => { buzzing = false; }, 400);
+    }
+  });
+
+  // ========== ADMIN SIDE ==========
+  let adminListenersStarted = false;
+
+  function startAdminListeners() {
+    if (adminListenersStarted || !db) return;
+    adminListenersStarted = true;
+    startConnectionWatcher();
+
+    db.ref("quiz/currentRound").on("value", snap => {
+      const data = snap.val() || {};
+      state.roundId = data.roundId || null;
+      state.roundStatus = data.status || "idle";
+      state.questionNumber = data.questionNumber || 1;
+      state.startedAt = data.startedAt || null;
+      state.currentTeamId = data.currentTeamId || null;
+      state.buzzes = data.buzzes || {};
+      renderAdminRound();
+    });
+
+    db.ref("quiz/scores").on("value", snap => {
+      state.scores = snap.val() || {};
+      renderScoreboard();
+    });
+
+    // Init scores for teams if missing
+    TEAMS.forEach(name => {
+      const id = teamIdFromName(name);
+      db.ref("quiz/scores/" + id).once("value", s => {
+        if (!s.exists()) {
+          db.ref("quiz/scores/" + id).set({ name, score: 0 });
+        }
+      });
+    });
+  }
+
+  function sortedBuzzes() {
+    return Object.entries(state.buzzes)
+      .map(([id, b]) => ({ id, ...b }))
+      .filter(b => b.timestamp != null)
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  function renderAdminRound() {
+    document.getElementById("q-num").textContent = "#" + String(state.questionNumber).padStart(2, "0");
+    const chip = document.getElementById("chip-status");
+    const st = document.getElementById("buzzer-status-text");
+    chip.className = "stat-chip";
+    if (state.roundStatus === "active") {
+      chip.classList.add("active");
+      st.textContent = "ACTIVE";
+    } else if (state.roundStatus === "locked") {
+      chip.classList.add("locked");
+      st.textContent = "LOCKED";
+    } else {
+      chip.classList.add("idle");
+      st.textContent = "IDLE";
+    }
+
+    const ordered = sortedBuzzes();
+    document.getElementById("team-count").textContent = TEAMS.length;
+
+    // First card
+    const firstCard = document.getElementById("first-card");
+    const firstTeam = document.getElementById("first-team");
+    const firstTime = document.getElementById("first-time");
+    if (ordered.length === 0) {
+      firstCard.classList.add("empty");
+      firstTeam.textContent = "Waiting for buzzes…";
+      firstTime.textContent = "";
+    } else {
+      const first = ordered[0];
+      const current = ordered.find(b => b.teamId === state.currentTeamId) || first;
+      firstCard.classList.remove("empty");
+      firstTeam.textContent = current.teamName;
+      let delta = "";
+      if (state.startedAt && current.timestamp) {
+        delta = formatMs(current.timestamp - state.startedAt);
+      }
+      firstTime.textContent = (current.status === "wrong" ? "WRONG → next" : "") + (delta ? " · " + delta : "");
+      if (current.status === "correct") firstTime.textContent = "CORRECT ✓ · " + (delta || "");
+    }
+
+    // Buzz list
+    const list = document.getElementById("buzz-list");
+    if (ordered.length === 0) {
+      list.innerHTML = '<li style="color:var(--text-muted);padding:12px;text-align:center">No buzzes yet</li>';
+      return;
+    }
+    list.innerHTML = "";
+    ordered.forEach((b, i) => {
+      const li = document.createElement("li");
+      li.className = "buzz-item";
+      if (i === 0 && b.status === "waiting" && !state.currentTeamId) li.classList.add("first");
+      if (b.teamId === state.currentTeamId) li.classList.add("current");
+      if (b.status === "wrong") li.classList.add("wrong");
+      if (b.status === "correct") li.classList.add("correct");
+
+      let badge = '<span class="badge badge-waiting">WAITING</span>';
+      if (b.teamId === state.currentTeamId) badge = '<span class="badge badge-current">YOUR TURN</span>';
+      else if (b.status === "wrong") badge = '<span class="badge badge-wrong">WRONG</span>';
+      else if (b.status === "correct") badge = '<span class="badge badge-correct">CORRECT</span>';
+      else if (i === 0) badge = '<span class="badge badge-first">FIRST</span>';
+
+      const delta = state.startedAt ? formatMs(b.timestamp - state.startedAt) : "—";
+      li.innerHTML = `
+        <div class="buzz-rank">${i + 1}</div>
+        <div class="buzz-info">
+          <div class="name">${escapeHtml(b.teamName)}</div>
+          <div class="meta">${delta}</div>
+        </div>
+        ${badge}
+      `;
+      list.appendChild(li);
+    });
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function renderScoreboard() {
+    const ul = document.getElementById("scoreboard");
+    const rows = TEAMS.map(name => {
+      const id = teamIdFromName(name);
+      const sc = state.scores[id] || { name, score: 0 };
+      return { id, name: sc.name || name, score: sc.score || 0 };
+    }).sort((a, b) => b.score - a.score);
+
+    ul.innerHTML = "";
+    rows.forEach(r => {
+      const li = document.createElement("li");
+      li.className = "score-row";
+      li.innerHTML = `
+        <span class="name">${escapeHtml(r.name)}</span>
+        <span class="pts">${r.score}</span>
+        <div class="score-actions">
+          <button data-act="sub" data-id="${r.id}" title="-1">−</button>
+          <button data-act="add" data-id="${r.id}" title="+1">+</button>
+        </div>
+      `;
+      ul.appendChild(li);
+    });
+  }
+
+  // Admin actions
+  document.getElementById("btn-activate").addEventListener("click", async () => {
+    if (!db) return;
+    const newRoundId = "r_" + Date.now();
+    const qn = (state.questionNumber || 0) + (state.roundStatus !== "idle" ? 1 : 0);
+    // If already idle with qnum, keep; else increment when starting fresh after a finished round
+    let nextQ = state.questionNumber || 1;
+    if (state.roundStatus !== "idle" || Object.keys(state.buzzes).length > 0) {
+      nextQ = (state.questionNumber || 1) + 1;
+    }
+    await db.ref("quiz/currentRound").set({
+      roundId: newRoundId,
+      status: "active",
+      questionNumber: nextQ,
+      startedAt: firebase.database.ServerValue.TIMESTAMP,
+      currentTeamId: null,
+      buzzes: {}
+    });
+    soundActivate();
+    showToast("Buzzer ACTIVE — Question #" + String(nextQ).padStart(2, "0"));
+  });
+
+  document.getElementById("btn-lock").addEventListener("click", async () => {
+    if (!db) return;
+    await db.ref("quiz/currentRound/status").set("locked");
+    showToast("Buzzer LOCKED");
+  });
+
+  document.getElementById("btn-reset").addEventListener("click", () => {
+    openConfirm("Reset Round?", "Clears all buzzes for this question. Scores are kept.", async () => {
+      if (!db) return;
+      await db.ref("quiz/currentRound").update({
+        status: "idle",
+        currentTeamId: null,
+        buzzes: null,
+        startedAt: null
+      });
+      // remove buzzes node cleanly
+      await db.ref("quiz/currentRound/buzzes").remove();
+      showToast("Round reset");
+    });
+  });
+
+  document.getElementById("btn-correct").addEventListener("click", () => {
+    const ordered = sortedBuzzes();
+    if (ordered.length === 0) {
+      showToast("No team has buzzed");
+      return;
+    }
+    const current = ordered.find(b => b.teamId === state.currentTeamId) || ordered.find(b => b.status === "waiting") || ordered[0];
+    if (!current || current.status === "wrong" || current.status === "correct") {
+      showToast("No eligible team");
+      return;
+    }
+    document.getElementById("points-team-label").textContent = current.teamName + " — award points";
+    document.getElementById("points-value").value = DEFAULT_POINTS;
+    document.getElementById("points-modal").classList.remove("hidden");
+    document.getElementById("points-modal").dataset.buzzId = current.id;
+    document.getElementById("points-modal").dataset.teamId = current.teamId;
+  });
+
+  document.getElementById("points-cancel").addEventListener("click", () => {
+    document.getElementById("points-modal").classList.add("hidden");
+  });
+
+  document.getElementById("points-confirm").addEventListener("click", async () => {
+    const modal = document.getElementById("points-modal");
+    const buzzId = modal.dataset.buzzId;
+    const teamId = modal.dataset.teamId;
+    const pts = parseInt(document.getElementById("points-value").value, 10) || DEFAULT_POINTS;
+    modal.classList.add("hidden");
+    if (!db || !buzzId) return;
+
+    await db.ref("quiz/currentRound/buzzes/" + buzzId + "/status").set("correct");
+    await db.ref("quiz/currentRound/status").set("locked");
+    await db.ref("quiz/currentRound/currentTeamId").set(teamId);
+
+    // Increment score
+    const scoreRef = db.ref("quiz/scores/" + teamId + "/score");
+    scoreRef.transaction(cur => (cur || 0) + pts);
+
+    soundWinner();
+    showToast("Correct! +" + pts + " points");
+  });
+
+  document.getElementById("btn-wrong").addEventListener("click", async () => {
+    if (!db) return;
+    const ordered = sortedBuzzes();
+    if (ordered.length === 0) {
+      showToast("No team has buzzed");
+      return;
+    }
+    // Current answering team
+    let idx = 0;
+    if (state.currentTeamId) {
+      idx = ordered.findIndex(b => b.teamId === state.currentTeamId);
+      if (idx < 0) idx = 0;
+    } else {
+      // first waiting
+      idx = ordered.findIndex(b => b.status === "waiting");
+      if (idx < 0) idx = 0;
+    }
+    const current = ordered[idx];
+    if (!current || current.status === "wrong" || current.status === "correct") {
+      showToast("No eligible team");
+      return;
+    }
+
+    await db.ref("quiz/currentRound/buzzes/" + current.id + "/status").set("wrong");
+    soundWrong();
+
+    // Find next waiting
+    const next = ordered.slice(idx + 1).find(b => b.status === "waiting");
+    if (next) {
+      await db.ref("quiz/currentRound/currentTeamId").set(next.teamId);
+      soundNext();
+      showToast("WRONG → " + next.teamName + " is next");
+    } else {
+      await db.ref("quiz/currentRound/currentTeamId").set(null);
+      await db.ref("quiz/currentRound/status").set("locked");
+      showToast("No more teams in queue");
+    }
+  });
+
+  // Score +/-
+  document.getElementById("scoreboard").addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn || !db) return;
+    const id = btn.dataset.id;
+    const act = btn.dataset.act;
+    const ref = db.ref("quiz/scores/" + id + "/score");
+    if (act === "add") ref.transaction(c => (c || 0) + 1);
+    if (act === "sub") ref.transaction(c => Math.max(0, (c || 0) - 1));
+  });
+
+  document.getElementById("btn-reset-scores").addEventListener("click", () => {
+    openConfirm("Reset all scores?", "Every team score will be set to 0.", async () => {
+      if (!db) return;
+      const updates = {};
+      TEAMS.forEach(name => {
+        const id = teamIdFromName(name);
+        updates["quiz/scores/" + id] = { name, score: 0 };
+      });
+      await db.ref().update(updates);
+      showToast("Scores reset");
+    });
+  });
+
+  // Confirm helper
+  let confirmCb = null;
+  function openConfirm(title, msg, cb) {
+    document.getElementById("confirm-title").textContent = title;
+    document.getElementById("confirm-msg").textContent = msg;
+    document.getElementById("confirm-modal").classList.remove("hidden");
+    confirmCb = cb;
+  }
+  document.getElementById("confirm-cancel").addEventListener("click", () => {
+    document.getElementById("confirm-modal").classList.add("hidden");
+    confirmCb = null;
+  });
+  document.getElementById("confirm-ok").addEventListener("click", async () => {
+    document.getElementById("confirm-modal").classList.add("hidden");
+    if (confirmCb) await confirmCb();
+    confirmCb = null;
+  });
+
+  // Sound toggle
+  document.getElementById("sound-toggle").addEventListener("click", () => {
+    state.soundOn = !state.soundOn;
+    document.getElementById("sound-icon").className = state.soundOn ? "fas fa-volume-up" : "fas fa-volume-mute";
+    if (state.soundOn) ensureAudio();
+  });
+
+  // ========== AUTH ==========
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("admin-email").value.trim();
+    const pass = document.getElementById("admin-pass").value;
+    const errEl = document.getElementById("login-error");
+    errEl.textContent = "";
+    try {
+      await auth.signInWithEmailAndPassword(email, pass);
+      // onAuthStateChanged handles navigation
+    } catch (err) {
+      errEl.textContent = err.message || "Login failed";
+    }
+  });
+
+  document.getElementById("admin-logout").addEventListener("click", () => {
+    auth.signOut();
+    adminListenersStarted = false;
+    location.hash = "";
+  });
+
+  // ========== NAV ==========
+  document.getElementById("go-team").addEventListener("click", () => { location.hash = "team"; });
+  document.getElementById("go-admin").addEventListener("click", () => { location.hash = "admin"; });
+  document.getElementById("team-back").addEventListener("click", () => { location.hash = ""; });
+  document.getElementById("admin-back").addEventListener("click", () => { location.hash = ""; });
+  document.getElementById("team-switch").addEventListener("click", () => {
+    localStorage.removeItem(STORAGE_KEY);
+    state.teamId = null;
+    state.teamName = null;
+    location.hash = "team";
+    showScreen("team-join");
+    renderTeamGrid();
+  });
+
+  window.addEventListener("hashchange", route);
+  // Initial
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY") {
+    console.warn("⚠️ Replace firebaseConfig placeholders before use.");
+  }
+  route();
+  </script>
+</body>
+</html>
