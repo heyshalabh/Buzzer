@@ -625,6 +625,29 @@
     appId: "1:1020607045608:web:d10f823d7b62df68ad8e5d",
     measurementId: "G-8N85G4Z04M"
   };
+    import { getDatabase, ref, onValue } from "firebase/database";
+
+const db = getDatabase();
+
+const connectedRef = ref(db, ".info/connected");
+
+onValue(connectedRef, (snapshot) => {
+    const isConnected = snapshot.val() === true;
+
+    console.log("Firebase Database:", isConnected ? "ONLINE" : "OFFLINE");
+
+    const status = document.getElementById("status");
+
+    if (isConnected) {
+        status.textContent = "● ONLINE";
+        status.classList.add("online");
+        status.classList.remove("offline");
+    } else {
+        status.textContent = "● OFFLINE";
+        status.classList.add("offline");
+        status.classList.remove("online");
+    }
+});
   
 
   // Edit this list for your event
